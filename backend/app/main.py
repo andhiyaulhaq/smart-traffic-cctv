@@ -5,6 +5,8 @@ from aiortc import RTCPeerConnection, RTCSessionDescription
 from app.services.webrtc import HLSVideoStreamTrack
 from app.config import settings
 from app.database.connection import init_db
+from app.database.repository import get_total_counts, get_hourly_stats
+from app.models.schemas import LineConfig, StatsResponse
 import json
 
 app = FastAPI(title="Smart Traffic CCTV API")
@@ -35,6 +37,23 @@ manager = ConnectionManager()
 # Global broadcast function for use in services
 async def broadcast_count_update(data: dict):
     await manager.broadcast(data)
+
+# Global Line Configuration (In-memory for simplicity in Phase 7)
+# Initialized with default horizontal line in the middle
+current_line_config = {
+    "x1": 0.0,
+    "y1": 0.5,
+    "x2": 1.0,
+    "y2": 0.5
+}
+
+def get_line_config():
+    return [
+        current_line_config["x1"],
+        current_line_config["y1"],
+        current_line_config["x2"],
+        current_line_config["y2"]
+    ]
 
 # Schema for WebRTC Offer
 class Offer(BaseModel):
@@ -77,6 +96,26 @@ async def websocket_endpoint(websocket: WebSocket):
             await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(websocket)
+
+@app.get("/line", response_model=LineConfig)
+async def get_line():
+    return current_line_config
+
+@app.post("/line")
+async def update_line(config: LineConfig):
+    global current_line_config
+    current_line_config = config.model_dump()
+    return {"status": "success", "config": current_line_config}
+
+@app.get("/stats/today", response_model=StatsResponse)
+async def get_today_stats():
+    counts = await get_total_counts()
+    hourly = await get_hourly_stats()
+    return {
+        "enter": counts["enter"],
+        "exit": counts["exit"],
+        "hourly_counts": hourly
+    }
 
 @app.on_event("shutdown")
 async def on_shutdown():

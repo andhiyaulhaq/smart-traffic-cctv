@@ -27,3 +27,20 @@ async def get_total_counts():
             for row in rows:
                 counts[row["direction"]] = row["count"]
             return counts
+
+async def get_hourly_stats():
+    """
+    Gets vehicle counts aggregated by hour for the current day.
+    """
+    async with get_db() as db:
+        async with db.execute(
+            """
+            SELECT strftime('%H:00', timestamp) as hour, COUNT(*) as count 
+            FROM counting_events 
+            WHERE date(timestamp) = date('now')
+            GROUP BY hour
+            ORDER BY hour ASC
+            """
+        ) as cursor:
+            rows = await cursor.fetchall()
+            return [{"hour": row["hour"], "count": row["count"]} for row in rows]

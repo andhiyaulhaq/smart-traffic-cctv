@@ -133,6 +133,11 @@ class HLSVideoStreamTrack(VideoStreamTrack):
 
         if ret:
             self._frame_count += 1
+            
+            # Update line coordinates from global config
+            from app.main import get_line_config
+            self._tracker.update_line(get_line_config())
+
             if self._frame_count % self._process_every_n == 0:
                 # Run detection and tracking
                 frame, detections = await loop.run_in_executor(None, self._detector.detect, frame)

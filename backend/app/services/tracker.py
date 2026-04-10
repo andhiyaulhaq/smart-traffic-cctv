@@ -15,6 +15,12 @@ class LineCounter:
         self.counted_ids = set()
         self.counts = {"enter": 0, "exit": 0}
 
+    def update_line(self, line_coords: list):
+        """Updates the virtual line coordinates."""
+        self.line_coords = line_coords
+        # Optionally clear track history if the line moves significantly
+        # self.track_history = {} 
+
     def _ccw(self, A, B, C):
         """Tests if the points A, B, C are in counter-clockwise order."""
         return (C[1] - A[1]) * (B[0] - A[0]) > (B[1] - A[1]) * (C[0] - A[0])
@@ -48,23 +54,28 @@ class LineCounter:
                 
             self.counted_ids.add(track_id)
             
-            # Simple direction logic: 
-            # If moving from top (y < line_y) to bottom (y > line_y) -> 'enter'
-            # If moving from bottom to top -> 'exit'
-            # (Assuming horizontal line at middle)
-            line_y = p1[1]
-            if last_center[1] < line_y and center[1] >= line_y:
-                self.counts["enter"] += 1
-                return "enter"
-            elif last_center[1] > line_y and center[1] <= line_y:
-                self.counts["exit"] += 1
-                return "exit"
-            else:
-                # If the line is vertical or vehicle movement is horizontal,
-                # this simple logic might need refinement.
-                # For now, we assume standard traffic flow (vertical movement).
-                self.counts["enter"] += 1
-                return "enter"
+            # Determine direction based on line midpoint
+            # If line is more horizontal, use Y-axis
+            # If line is more vertical, use X-axis
+            dx = abs(p2[0] - p1[0])
+            dy = abs(p2[1] - p1[1])
+            
+            if dy > dx: # More vertical line
+                mid_x = (p1[0] + p2[0]) / 2
+                if last_center[0] < mid_x and center[0] >= mid_x:
+                    self.counts["enter"] += 1
+                    return "enter"
+                else:
+                    self.counts["exit"] += 1
+                    return "exit"
+            else: # More horizontal line
+                mid_y = (p1[1] + p2[1]) / 2
+                if last_center[1] < mid_y and center[1] >= mid_y:
+                    self.counts["enter"] += 1
+                    return "enter"
+                else:
+                    self.counts["exit"] += 1
+                    return "exit"
                 
         return None
 
