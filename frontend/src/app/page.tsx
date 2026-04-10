@@ -38,7 +38,7 @@ export default function Home() {
         <header className="space-y-2">
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-neutral-50 to-neutral-400 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-neutral-50 to-neutral-400 bg-clip-text text-transparent">
               Smart Traffic CCTV
             </h1>
             <Badge variant="outline" className="border-neutral-800 text-neutral-400 font-mono">
@@ -55,10 +55,10 @@ export default function Home() {
           {/* Main Feed */}
           <div className="lg:col-span-2 space-y-4">
             <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-blue-500/20 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000" />
+              <div className="absolute -inset-1 bg-linear-to-r from-primary/20 to-blue-500/20 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000" />
               <VideoPlayer />
             </div>
-            
+
             <div className="flex items-center justify-between text-xs text-neutral-500 bg-neutral-900/50 p-3 rounded-xl border border-neutral-800 backdrop-blur-sm">
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-yellow-500 animate-pulse"}`} />
@@ -75,12 +75,12 @@ export default function Home() {
 
           {/* Sidebar / Analytics */}
           <div className="space-y-6">
-            <CounterCard 
-              enterCount={counts.enter} 
-              exitCount={counts.exit} 
+            <CounterCard
+              enterCount={counts.enter}
+              exitCount={counts.exit}
               lastEvent={lastEvent}
             />
-            
+
             {/* Quick Stats Placeholder */}
             <div className="p-5 rounded-2xl border border-neutral-800 bg-neutral-900/30 space-y-4 backdrop-blur-md">
               <div className="flex items-center justify-between">
