@@ -25,8 +25,8 @@ The goal is to **get a working video stream from the backend to the frontend as 
    - Create a `/offer` endpoint that returns an SDP answer using `aiortc`.  
    - No OpenCV, no YOLO yet.
 
-2. **Frontend – WebRTC signalling**  
-   - Install `simple-peer`.  
+2. **Frontend – WebRTC signalling**
+   - No extra WebRTC libraries required (use native browser `RTCPeerConnection`).
    - Create a `useWebRTC` hook that calls `/offer`, exchanges SDP, and attaches the remote stream to a `<video>` element.  
    - Display the video.
 

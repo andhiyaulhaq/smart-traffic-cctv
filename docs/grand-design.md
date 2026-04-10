@@ -34,7 +34,7 @@ The system is designed as a **production‑ready portfolio piece** showcasing re
 |-------|------------|-----|
 | **Python package manager** | `uv` (astral-sh/uv) | Extremely fast, replaces `pip` / `poetry` / `requirements.txt`. Single tool for deps, virtual envs, and scripting. |
 | **Backend** | FastAPI | High performance, async support, automatic OpenAPI docs, easy WebRTC signaling integration. |
-| **WebRTC** | `aiortc` (Python) + `simple-peer` (frontend) | Lightweight, works without third‑party media servers. |
+| **WebRTC** | `aiortc` (Python) + native browser `RTCPeerConnection` (frontend) | Lightweight, works without third‑party media servers or heavy dependencies. |
 | **Object Detection & Tracking** | YOLOv8 + ByteTrack (via `model.track(..., tracker="bytetrack.yaml")`) | State‑of‑the‑art tracking that handles occlusions and ID switches well. Built into Ultralytics. |
 | **HLS Ingestion** | OpenCV (`cv2.VideoCapture`) with FFmpeg backend | Can read HLS streams directly; FFmpeg handles re-buffering and reconnection. |
 | **Video Processing** | OpenCV + `numpy` | Frame capture, drawing, and transformation. |
@@ -98,7 +98,7 @@ frontend/
 │   │   ├── LineConfig.tsx    # Sliders to adjust virtual line position
 │   │   └── HistoryChart.tsx  # Recharts line chart of counts per minute
 │   ├── hooks/
-│   │   ├── useWebRTC.ts      # simple-peer initialisation, signalling
+│   │   ├── useWebRTC.ts      # native RTCPeerConnection initialisation, signalling
 │   │   └── useWebSocket.ts   # listen for real‑time count updates
 │   ├── lib/
 │   │   ├── api.ts            # typed fetch calls (can use Next.js API routes as proxy)
