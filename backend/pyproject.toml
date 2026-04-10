@@ -13,5 +13,6 @@ dependencies = [
     "pydantic>=2.12.5",
     "pydantic-settings>=2.13.1",
     "python-dotenv>=1.2.2",
+    "ultralytics>=8.4.36",
     "uvicorn>=0.44.0",
 ]

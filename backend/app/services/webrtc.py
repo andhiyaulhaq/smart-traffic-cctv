@@ -4,6 +4,7 @@ import numpy as np
 import time
 from av import VideoFrame
 from aiortc import VideoStreamTrack
+from app.services.ai import YOLOInference
 
 class SyntheticVideoTrack(VideoStreamTrack):
     """
@@ -89,6 +90,9 @@ class HLSVideoStreamTrack(VideoStreamTrack):
         self.stream_url = stream_url
         self.cap = None
         self.fps = 30.0  # Default fallback FPS
+        self._detector = YOLOInference()
+        self._frame_count = 0
+        self._process_every_n = 2 # Detect on every 2nd frame for performance
         self._connect()
 
     def _connect(self):
@@ -113,6 +117,13 @@ class HLSVideoStreamTrack(VideoStreamTrack):
         
         if self.cap and self.cap.isOpened():
             ret, frame = await loop.run_in_executor(None, self.cap.read)
+
+        if ret:
+            # Run detection on every Nth frame to preserve performance
+            self._frame_count += 1
+            if self._frame_count % self._process_every_n == 0:
+                # Process detection in a thread to avoid blocking the event loop
+                frame = await loop.run_in_executor(None, self._detector.detect, frame)
 
         if not ret:
             # Connection dropped or stalled
