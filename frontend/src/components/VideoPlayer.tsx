@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { useWebRTC } from "@/hooks/useWebRTC";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
-export default function VideoPlayer() {
+export function VideoPlayer() {
   const { stream, error } = useWebRTC();
   const videoRef = useRef<HTMLVideoElement>(null);
 

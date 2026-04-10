@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "aiortc>=1.14.0",
+    "aiosqlite>=0.22.1",
     "av>=16.1.0",
     "fastapi>=0.135.3",
     "numpy>=2.4.4",
@@ -15,4 +16,5 @@ dependencies = [
     "python-dotenv>=1.2.2",
     "ultralytics>=8.4.36",
     "uvicorn>=0.44.0",
+    "websockets>=16.0",
 ]

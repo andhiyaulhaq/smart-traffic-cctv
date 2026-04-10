@@ -5,6 +5,8 @@ import time
 from av import VideoFrame
 from aiortc import VideoStreamTrack
 from app.services.ai import YOLOInference
+from app.services.tracker import LineCounter
+from app.database.repository import save_count_event, get_total_counts
 
 class SyntheticVideoTrack(VideoStreamTrack):
     """
@@ -91,9 +93,20 @@ class HLSVideoStreamTrack(VideoStreamTrack):
         self.cap = None
         self.fps = 30.0  # Default fallback FPS
         self._detector = YOLOInference()
+        self._tracker = LineCounter()
         self._frame_count = 0
         self._process_every_n = 1 # Process every frame for better tracker continuity
         self._connect()
+        
+        # Initial counts from DB
+        self._counts = {"enter": 0, "exit": 0}
+        asyncio.create_task(self._sync_counts())
+
+    async def _sync_counts(self):
+        """Syncs the in-memory tracker counts with the database."""
+        db_counts = await get_total_counts()
+        self._tracker.counts = db_counts
+        self._counts = db_counts
 
     def _connect(self):
         if self.cap:
@@ -119,11 +132,47 @@ class HLSVideoStreamTrack(VideoStreamTrack):
             ret, frame = await loop.run_in_executor(None, self.cap.read)
 
         if ret:
-            # Run detection on every Nth frame to preserve performance
             self._frame_count += 1
             if self._frame_count % self._process_every_n == 0:
-                # Process detection in a thread to avoid blocking the event loop
-                frame = await loop.run_in_executor(None, self._detector.detect, frame)
+                # Run detection and tracking
+                frame, detections = await loop.run_in_executor(None, self._detector.detect, frame)
+                
+                # Check for line crossings
+                for det in detections:
+                    direction = self._tracker.check_crossing(det["track_id"], det["center"], frame.shape)
+                    if direction:
+                        # Crossing detected!
+                        self._counts = self._tracker.get_counts()
+                        # Save to DB and broadcast (fire and forget tasks)
+                        asyncio.create_task(save_count_event(
+                            direction=direction,
+                            vehicle_class=det["class_name"],
+                            track_id=det["track_id"],
+                            confidence=det["confidence"]
+                        ))
+                        
+                        # We need the broadcast function from main.py
+                        # But wait, to avoid circular imports, we can use a callback or import locally
+                        from app.main import broadcast_count_update
+                        asyncio.create_task(broadcast_count_update({
+                            "type": "count_update",
+                            "counts": self._counts,
+                            "event": {
+                                "direction": direction,
+                                "class_name": det["class_name"],
+                                "track_id": det["track_id"]
+                            }
+                        }))
+
+            # Draw the virtual line
+            p1, p2 = self._tracker.get_line_pixels(frame.shape)
+            cv2.line(frame, p1, p2, (255, 0, 0), 2) # Blue line
+            
+            # Draw counts on frame
+            enter_text = f"Entered: {self._counts['enter']}"
+            exit_text = f"Exited: {self._counts['exit']}"
+            cv2.putText(frame, enter_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            cv2.putText(frame, exit_text, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 
         if not ret:
             # Connection dropped or stalled
