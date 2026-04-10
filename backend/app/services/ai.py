@@ -17,16 +17,21 @@ class YOLOInference:
 
     def detect(self, frame: np.ndarray) -> np.ndarray:
         """
-        Detects vehicles in a frame and returns the annotated frame.
+        Detects and tracks vehicles in a frame and returns the annotated frame.
         """
-        # Run inference
+        # Run tracking
+        # persist=True retains history between frames
+        # tracker="bytetrack.yaml" uses the ByteTrack tracker
         # verbose=False suppresses prediction logs in console
-        results = self.model(frame, verbose=False)[0]
+        results = self.model.track(frame, persist=True, tracker="bytetrack.yaml", verbose=False)[0]
         
         # Get detection results
         boxes = results.boxes
         names = results.names
         
+        if boxes is None or len(boxes) == 0:
+            return frame
+
         for box in boxes:
             cls_id = int(box.cls[0])
             
@@ -39,11 +44,17 @@ class YOLOInference:
             conf = float(box.conf[0])
             class_name = names[cls_id]
             
-            # Prepare label text
-            label = f"{class_name} {conf:.2f}"
+            # Extract Track ID
+            track_id = int(box.id[0]) if box.id is not None else -1
             
-            # Bounding box color (Green)
-            color = (0, 255, 0)
+            # Prepare label text
+            if track_id != -1:
+                label = f"{class_name} ID:{track_id} {conf:.2f}"
+            else:
+                label = f"{class_name} {conf:.2f}"
+            
+            # Bounding box color (Orange for tracked: BGR)
+            color = (0, 165, 255)
             
             # Draw the bounding box
             cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)

@@ -92,7 +92,7 @@ class HLSVideoStreamTrack(VideoStreamTrack):
         self.fps = 30.0  # Default fallback FPS
         self._detector = YOLOInference()
         self._frame_count = 0
-        self._process_every_n = 2 # Detect on every 2nd frame for performance
+        self._process_every_n = 1 # Process every frame for better tracker continuity
         self._connect()
 
     def _connect(self):
