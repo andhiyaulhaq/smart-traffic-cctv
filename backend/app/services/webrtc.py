@@ -78,3 +78,64 @@ class FileVideoStreamTrack(VideoStreamTrack):
         super().stop()
         if self.cap:
             self.cap.release()
+
+class HLSVideoStreamTrack(VideoStreamTrack):
+    """
+    Reads frames from an HLS stream using OpenCV and streams them via WebRTC.
+    Includes basic retry logic if the stream drops.
+    """
+    def __init__(self, stream_url: str):
+        super().__init__()
+        self.stream_url = stream_url
+        self.cap = None
+        self.fps = 30.0  # Default fallback FPS
+        self._connect()
+
+    def _connect(self):
+        if self.cap:
+            self.cap.release()
+        
+        # cv2.CAP_FFMPEG is explicitly passed to ensure proper network/HLS handling
+        self.cap = cv2.VideoCapture(self.stream_url, cv2.CAP_FFMPEG)
+        
+        if not self.cap.isOpened():
+            print(f"Warning: Could not open HLS stream: {self.stream_url}")
+        else:
+            fps = self.cap.get(cv2.CAP_PROP_FPS)
+            if fps > 0 and not np.isnan(fps):
+                self.fps = fps
+
+    async def recv(self):
+        pts, time_base = await self.next_timestamp()
+
+        loop = asyncio.get_event_loop()
+        ret, frame = False, None
+        
+        if self.cap and self.cap.isOpened():
+            ret, frame = await loop.run_in_executor(None, self.cap.read)
+
+        if not ret:
+            # Connection dropped or stalled
+            print("Stream read failed or stream ended. Reconnecting...")
+            await loop.run_in_executor(None, self._connect)
+            
+            # Return a placeholder frame with a "RECONNECTING..." message
+            frame = np.zeros((480, 640, 3), dtype=np.uint8)
+            cv2.putText(frame, "RECONNECTING...", (50, 240), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+            
+            # Small delay to prevent spamming reconnection attempts instantly
+            await asyncio.sleep(1.0)
+        
+        # Convert the numpy array frame to an av.VideoFrame
+        video_frame = VideoFrame.from_ndarray(frame, format="bgr24")
+        video_frame.pts = pts
+        video_frame.time_base = time_base
+
+        return video_frame
+
+    def stop(self):
+        """Ensure we release the cv2 VideoCapture when the track stops."""
+        super().stop()
+        if self.cap:
+            self.cap.release()

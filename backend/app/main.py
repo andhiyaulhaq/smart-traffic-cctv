@@ -2,7 +2,8 @@ import asyncio
 from fastapi import FastAPI
 from pydantic import BaseModel
 from aiortc import RTCPeerConnection, RTCSessionDescription
-from app.services.webrtc import SyntheticVideoTrack, FileVideoStreamTrack
+from app.services.webrtc import SyntheticVideoTrack, FileVideoStreamTrack, HLSVideoStreamTrack
+from app.config import settings
 
 app = FastAPI(title="Smart Traffic CCTV API")
 
@@ -26,8 +27,8 @@ async def offer(offer_data: Offer):
         if pc.connectionState == "failed" or pc.connectionState == "closed":
             pcs.discard(pc)
 
-    # Use the real video track instead of the synthetic one
-    pc.addTrack(FileVideoStreamTrack(video_path="data/traffic.mp4"))
+    # Use the HLS stream track driven by configuration
+    pc.addTrack(HLSVideoStreamTrack(stream_url=settings.HLS_STREAM_URL))
 
     await pc.setRemoteDescription(offer)
     answer = await pc.createAnswer()
