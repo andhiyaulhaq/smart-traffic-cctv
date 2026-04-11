@@ -6,6 +6,7 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 import { useState, useEffect } from "react";
 import { LineConfig } from "@/components/LineConfig";
 import { HistoryChart } from "@/components/HistoryChart";
+import { EventsTable } from "@/components/EventsTable";
 import { getTodayStats } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Activity } from "lucide-react";
@@ -108,6 +109,7 @@ export default function Home() {
             </div>
 
             <LineConfig />
+            <EventsTable lastEvent={lastEvent} />
           </div>
         </div>
       </div>

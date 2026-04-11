@@ -44,3 +44,14 @@ async def get_hourly_stats():
         ) as cursor:
             rows = await cursor.fetchall()
             return [{"hour": row["hour"], "count": row["count"]} for row in rows]
+
+async def get_recent_events(limit: int = 50):
+    """
+    Gets the most recent vehicle crossing events.
+    """
+    async with get_db() as db:
+        async with db.execute(
+            "SELECT * FROM counting_events ORDER BY timestamp DESC LIMIT ?", (limit,)
+        ) as cursor:
+            rows = await cursor.fetchall()
+            return [dict(row) for row in rows]

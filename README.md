@@ -1,55 +1,73 @@
 # Smart Traffic CCTV
 
-A real-time vehicle counting system that ingests a live CCTV HLS stream, detects and tracks vehicles, counts crossings over a virtual line, and displays the results in a modern web dashboard. 
+A real-time vehicle counting system that ingests a live CCTV HLS stream, detects and tracks vehicles, counts crossings over a virtual line, and displays the results in a modern web dashboard.
 
-## Overview
-This project showcases real-time computer vision capabilities integrated with a modern web stack. It uses YOLOv8 and ByteTrack to reliably identify, track, and count vehicles parsing a live feed, and presents it in a real-time dashboard powered by WebRTC.
+## Architecture
 
-### Tech Stack
-*   **Backend Support**: FastAPI (Python), utilizing `uv` for package management.
-*   **Object Detection & Tracking**: YOLOv8 + ByteTrack.
-*   **Database**: SQLite.
-*   **Real-time Streaming**: WebRTC via `aiortc` (Backend) and `simple-peer` (Frontend). 
-*   **Frontend**: Next.js (App Router), styled with Tailwind CSS and `shadcn/ui`, utilizing `pnpm`.
+```mermaid
+graph TD
+    subgraph "External"
+        HLS[HLS Stream .m3u8]
+    end
 
-## Project Structure
-*   `/backend` - Provides API endpoints (REST & WebSockets) and handles computer vision tasks (processing the live feed via OpenCV).
-*   `/frontend` - Contains the Next.js React application driving the dashboard UI.
-*   `/docs` - Project documentation, planning, and design.
+    subgraph "Backend (FastAPI)"
+        Reader[HLS Reader - OpenCV]
+        Inference[YOLOv8 + ByteTrack]
+        DB[(SQLite)]
+        Signaling[WebRTC Signaling]
+        WS[WebSocket Server]
+    end
+
+    subgraph "Frontend (Next.js)"
+        Video[Video Player - WebRTC]
+        Stats[Analytics Dashboard]
+        Logs[Audit Logs Table]
+        Config[Line Configuration]
+    end
+
+    HLS --> Reader
+    Reader --> Inference
+    Inference --> DB
+    Inference --> Signaling
+    Inference --> WS
+    Signaling <--> Video
+    WS --> Stats
+    WS --> Logs
+    Config --> Signaling
+```
 
 ## How to Run
 
-The system requires running both the backend server and the frontend development server concurrently. 
+### Method A: Running with Docker (Recommended)
 
-### Prerequisites
-*   Node.js and `pnpm` installed.
-*   Python 3.11+ and `uv` installed.
+Ensure you have Docker and Docker Compose installed.
 
-### 1. Start the Backend (FastAPI)
+1.  **Clone the repository**
+2.  **Configure environment variables**: Add your HLS stream URL to the `docker-compose.yml` or a `.env` file.
+3.  **Start the system**:
+    ```bash
+    docker-compose up --build
+    ```
+4.  **Access the Dashboard**: Open `http://localhost:3000`.
 
-Open a new terminal session and navigate to the `backend` directory:
+### Method B: Manual Development Setup
 
+#### Prerequisites
+* Node.js and `pnpm` installed.
+* Python 3.11+ and `uv` installed.
+
+#### 1. Start the Backend (FastAPI)
 ```bash
 cd backend
-# Run the FastAPI server via uvicorn wrapper
 uv run uvicorn app.main:app --reload --port 8000
 ```
-The backend API will be accessible at `http://localhost:8000`.
 
-### 2. Start the Frontend (Next.js)
-
-Open a second terminal session and navigate to the `frontend` directory:
-
+#### 2. Start the Frontend (Next.js)
 ```bash
 cd frontend
-# Install dependencies if this is your first time:
-# pnpm install
-# Start the development server
+pnpm install
 pnpm dev --port 3000
 ```
-The frontend dashboard will be accessible at `http://localhost:3000`.
-
-*Note: The frontend is configured to proxy API requests prefixed with `/api` directly to the backend running on port 8000.*
 
 ---
-**Status**: Currently in Phase 0 (Project Scaffolding complete; baseline connection established).
+**Status**: Phase 8 - Production Readiness & Optimization complete. (Dockerization, Audit Logs, and Performance Tuning).

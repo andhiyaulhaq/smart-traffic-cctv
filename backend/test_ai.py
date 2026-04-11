@@ -11,9 +11,10 @@ def test_inference():
     frame = np.zeros((480, 640, 3), dtype=np.uint8)
     
     print("Testing detection on dummy frame...")
-    result = detector.detect(frame)
+    annotated_frame, detections = detector.detect(frame)
     print("Detection done.")
-    print("Result frame shape:", result.shape)
+    print("Result frame shape:", annotated_frame.shape)
+    print("Number of detections:", len(detections))
 
 if __name__ == "__main__":
     test_inference()

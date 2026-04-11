@@ -15,3 +15,11 @@ class StatsResponse(BaseModel):
     enter: int
     exit: int
     hourly_counts: List[HourlyCount]
+
+class CountEvent(BaseModel):
+    id: int
+    timestamp: str
+    direction: str
+    vehicle_class: str
+    track_id: int
+    confidence: float

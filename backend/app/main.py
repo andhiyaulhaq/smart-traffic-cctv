@@ -1,12 +1,13 @@
 import asyncio
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
+from typing import List
 from aiortc import RTCPeerConnection, RTCSessionDescription
 from app.services.webrtc import HLSVideoStreamTrack
 from app.config import settings
 from app.database.connection import init_db
-from app.database.repository import get_total_counts, get_hourly_stats
-from app.models.schemas import LineConfig, StatsResponse
+from app.database.repository import get_total_counts, get_hourly_stats, get_recent_events
+from app.models.schemas import LineConfig, StatsResponse, CountEvent
 import json
 
 app = FastAPI(title="Smart Traffic CCTV API")
@@ -116,6 +117,10 @@ async def get_today_stats():
         "exit": counts["exit"],
         "hourly_counts": hourly
     }
+
+@app.get("/events", response_model=List[CountEvent])
+async def get_events(limit: int = 50):
+    return await get_recent_events(limit)
 
 @app.on_event("shutdown")
 async def on_shutdown():

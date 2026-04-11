@@ -2,6 +2,7 @@ import asyncio
 import cv2
 import numpy as np
 import time
+from datetime import datetime
 from av import VideoFrame
 from aiortc import VideoStreamTrack
 from app.services.ai import YOLOInference
@@ -92,10 +93,11 @@ class HLSVideoStreamTrack(VideoStreamTrack):
         self.stream_url = stream_url
         self.cap = None
         self.fps = 30.0  # Default fallback FPS
+        from app.config import settings
         self._detector = YOLOInference()
         self._tracker = LineCounter()
         self._frame_count = 0
-        self._process_every_n = 1 # Process every frame for better tracker continuity
+        self._process_every_n = settings.FRAME_SKIP + 1 # Process every 1st, 3rd, 5th frame if skip=2
         self._connect()
         
         # Initial counts from DB
@@ -163,9 +165,12 @@ class HLSVideoStreamTrack(VideoStreamTrack):
                             "type": "count_update",
                             "counts": self._counts,
                             "event": {
+                                "id": int(time.time() * 1000),
+                                "timestamp": datetime.now().isoformat(),
                                 "direction": direction,
-                                "class_name": det["class_name"],
-                                "track_id": det["track_id"]
+                                "vehicle_class": det["class_name"],
+                                "track_id": det["track_id"],
+                                "confidence": det["confidence"]
                             }
                         }))
 

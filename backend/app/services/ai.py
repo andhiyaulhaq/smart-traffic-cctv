@@ -15,6 +15,13 @@ class YOLOInference:
         # 2: car, 3: motorcycle, 5: bus, 7: truck
         self.vehicle_classes = [2, 3, 5, 7]
 
+        # Warmup if enabled
+        from app.config import settings
+        if settings.MODEL_WARMUP:
+            print("Warming up YOLO model...")
+            dummy_frame = np.zeros((640, 640, 3), dtype=np.uint8)
+            self.model.track(dummy_frame, persist=True, tracker="bytetrack.yaml", verbose=False)
+
     def detect(self, frame: np.ndarray) -> tuple[np.ndarray, list]:
         """
         Detects and tracks vehicles in a frame.
