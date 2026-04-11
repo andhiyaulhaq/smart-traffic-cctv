@@ -166,7 +166,7 @@ class HLSVideoStreamTrack(VideoStreamTrack):
                             "counts": self._counts,
                             "event": {
                                 "id": int(time.time() * 1000),
-                                "timestamp": datetime.now().isoformat(),
+                                "timestamp": datetime.utcnow().isoformat() + "Z",
                                 "direction": direction,
                                 "vehicle_class": det["class_name"],
                                 "track_id": det["track_id"],

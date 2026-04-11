@@ -35,9 +35,9 @@ async def get_hourly_stats():
     async with get_db() as db:
         async with db.execute(
             """
-            SELECT strftime('%H:00', timestamp) as hour, COUNT(*) as count 
+            SELECT strftime('%H:00', timestamp, 'localtime') as hour, COUNT(*) as count 
             FROM counting_events 
-            WHERE date(timestamp) = date('now')
+            WHERE date(timestamp, 'localtime') = date('now', 'localtime')
             GROUP BY hour
             ORDER BY hour ASC
             """
@@ -51,7 +51,12 @@ async def get_recent_events(limit: int = 50):
     """
     async with get_db() as db:
         async with db.execute(
-            "SELECT * FROM counting_events ORDER BY timestamp DESC LIMIT ?", (limit,)
+            """
+            SELECT id, strftime('%Y-%m-%dT%H:%M:%SZ', timestamp) as timestamp, 
+                   direction, vehicle_class, track_id, confidence 
+            FROM counting_events 
+            ORDER BY timestamp DESC LIMIT ?
+            """, (limit,)
         ) as cursor:
             rows = await cursor.fetchall()
             return [dict(row) for row in rows]
